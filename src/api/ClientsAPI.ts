@@ -4,21 +4,21 @@ import axios, {
     AxiosRequestConfig,
     RawAxiosRequestHeaders
 } from 'axios';
-import { NewUser, UserRecord } from '../models/user';
 import { ApiErrorObject } from './types';
 import {
     apiErrorsToConsolidatedErrorObject,
     generateApiUnexpectedError
 } from './utils/data-management';
 import { PaginatedCollection } from '@msoffredi/gcp-common';
+import { ClientRecord, NewClient } from '../models/client';
 
-class UsersAPI {
-    private static getUsersAPIAxiosObj = (): AxiosInstance => {
+class ClientsAPI {
+    private static getClientsAPIAxiosObj = (): AxiosInstance => {
         const headers: RawAxiosRequestHeaders = {
             'Content-Type': 'application/json'
         };
 
-        const baseURL = process.env.REACT_APP_USERS_API_BASEURL!;
+        const baseURL = process.env.REACT_APP_CLIENTS_API_BASEURL!;
 
         return axios.create({
             baseURL,
@@ -27,12 +27,12 @@ class UsersAPI {
     };
 
     public static create = async (
-        userData: NewUser
-    ): Promise<ApiErrorObject | UserRecord> => {
-        const api = UsersAPI.getUsersAPIAxiosObj();
+        userData: NewClient
+    ): Promise<ApiErrorObject | ClientRecord> => {
+        const api = ClientsAPI.getClientsAPIAxiosObj();
 
         try {
-            const user = await api.post<UserRecord>('', userData);
+            const user = await api.post<ClientRecord>('', userData);
 
             if (user.data) {
                 return user.data;
@@ -54,10 +54,10 @@ class UsersAPI {
         return generateApiUnexpectedError('creating user');
     };
 
-    public static get = async (userId: string): Promise<UserRecord> => {
-        const api = UsersAPI.getUsersAPIAxiosObj();
+    public static get = async (userId: string): Promise<ClientRecord> => {
+        const api = ClientsAPI.getClientsAPIAxiosObj();
 
-        const { status, data } = await api.get<UserRecord>(`/${userId}`);
+        const { status, data } = await api.get<ClientRecord>(`/${userId}`);
 
         if (status === 200 && data && data._id) {
             return data;
@@ -69,20 +69,19 @@ class UsersAPI {
     public static getMany = async (
         limit = 10,
         createdAt?: string
-    ): Promise<PaginatedCollection<UserRecord>> => {
+    ): Promise<PaginatedCollection<ClientRecord>> => {
         const filter: AxiosRequestConfig = {
             params: { limit }
         };
-        const api = UsersAPI.getUsersAPIAxiosObj();
+        const api = ClientsAPI.getClientsAPIAxiosObj();
 
         if (createdAt) {
             filter.params.createdAt = createdAt;
         }
 
-        const { status, data } = await api.get<PaginatedCollection<UserRecord>>(
-            '',
-            filter
-        );
+        const { status, data } = await api.get<
+            PaginatedCollection<ClientRecord>
+        >('', filter);
 
         if (status === 200 && data) {
             return data;
@@ -92,12 +91,12 @@ class UsersAPI {
     };
 
     public static delete = async (
-        userId: string
+        clientId: string
     ): Promise<ApiErrorObject | void> => {
-        const api = UsersAPI.getUsersAPIAxiosObj();
+        const api = ClientsAPI.getClientsAPIAxiosObj();
 
         try {
-            const { status } = await api.delete<UserRecord>(`/${userId}`);
+            const { status } = await api.delete<ClientRecord>(`/${clientId}`);
 
             if (status === 200) {
                 return;
@@ -110,14 +109,14 @@ class UsersAPI {
                 !(err.response.data instanceof Array) ||
                 !err.response.data.length
             ) {
-                return generateApiUnexpectedError('deleting user');
+                return generateApiUnexpectedError('deleting client');
             }
 
             return apiErrorsToConsolidatedErrorObject(err.response.data);
         }
 
-        return generateApiUnexpectedError('deleting user');
+        return generateApiUnexpectedError('deleting client');
     };
 }
 
-export default UsersAPI;
+export default ClientsAPI;

@@ -15,5 +15,9 @@ const checkEnvVar = (envVar: string): boolean => {
 };
 
 export const envVarOk = (): boolean => {
-    return checkEnvVar('REACT_APP_ENV');
+    return (
+        checkEnvVar('REACT_APP_ENV') &&
+        checkEnvVar('REACT_APP_CLIENTS_API_BASEURL') &&
+        checkEnvVar('REACT_APP_USERS_API_BASEURL')
+    );
 };
