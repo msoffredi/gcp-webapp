@@ -3,6 +3,11 @@ resource "google_storage_bucket" "website" {
     provider = google
     name     = "gcp-ms-soffredi-website"
     location = var.region
+
+    website {
+        main_page_suffix = "index.html"
+        not_found_page   = "404.html"
+    }
 }
 
 # Make new objects public
