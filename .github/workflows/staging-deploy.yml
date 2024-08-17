@@ -1,0 +1,83 @@
+name: staging-deploy
+run-name: ${{ github.actor }} has triggered the pipeline for Staging
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
+        env:
+            DEPLOY_BUCKET: ${{ vars.DEPLOY_BUCKET_STAGING }}
+
+            # Terraform env vars are lowcase by project convention
+            TF_VAR_project_id: ${{ vars.PROJECT_ID_STAGING }}
+            TF_VAR_deploy_prefix: 'staging'
+            TF_VAR_domain_zone_name: ${{ vars.DOMAIN_ZONE_NAME }}
+            TF_VAR_domain_project_id: ${{ vars.DOMAIN_PROJECT_ID }}
+            TF_VAR_deploy_env: 'staging'
+        steps:
+            # Checkout code form repo
+            - name: 'Checking out code...'
+              uses: actions/checkout@v4
+
+            # Generate backend.tf file
+            - name: 'Generating backend.tf file...'
+              run: chmod a+rx .deploy/backend.tf.sh && ./.deploy/backend.tf.sh
+
+            - name: 'backend.tf'
+              run: cat backend.tf
+
+            # Login to GCP
+            - name: 'Logging in to GCP...'
+              id: auth
+              uses: google-github-actions/auth@v2
+              with:
+                  workload_identity_provider: ${{ vars.GCP_MS_IDP_STAGING }}
+                  create_credentials_file: true
+                  service_account: ${{ vars.GCP_MS_SVC_ACCT_STAGING }}
+                  token_format: 'access_token'
+                  access_token_lifetime: '120s'
+
+            - name: Copying deployment files...
+              run: cp -fr .deploy/.npmrc ./
+
+            # Build webapp
+            - name: 'Building webapp...'
+              run: npm run build:gcp
+              env:
+                  NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            # Terraform steps
+            - name: 'Setting up Terraform...'
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.9
+                  terraform_wrapper: true
+            - name: 'Terraform init...'
+              id: init
+              run: cd terraform && terraform init
+            - name: 'Terraform Format...'
+              id: fmt
+              run: terraform fmt -recursive -write=true
+            - name: 'Terraform validate...'
+              id: validate
+              run: terraform validate
+            - name: 'Terraform plan...'
+              id: plan
+              run: terraform plan
+              continue-on-error: true
+            - name: 'Terraform Plan Status...'
+              if: steps.plan.outcome == 'failure'
+              run: exit 1
+            - name: 'Terraform apply...'
+              run: terraform apply -auto-approve
