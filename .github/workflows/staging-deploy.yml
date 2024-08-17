@@ -33,7 +33,7 @@ jobs:
 
             # Generate backend.tf file
             - name: 'Generating backend.tf file...'
-              run: chmod a+rx .deploy/backend.tf.sh && cd terraform && ./.deploy/backend.tf.sh && cd ..
+              run: chmod a+rx .deploy/backend.tf.sh && cd terraform && ../.deploy/backend.tf.sh && cd ..
 
             - name: 'backend.tf'
               run: cat ./terraform/backend.tf
