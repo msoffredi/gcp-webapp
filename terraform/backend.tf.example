@@ -1,0 +1,11 @@
+terraform {
+    # If you uncomment and use cloud-based terraform states, consider
+    # switching the MongoDB Atlas pub/priv keys to using environment
+    # variables instead (see README.md).
+    # backend "gcs" {
+    #   bucket = "<your-deployment-bucket>"
+    #   prefix = "terraform/gcp-infra-state"  
+    # }
+
+    backend "local" {}
+}
