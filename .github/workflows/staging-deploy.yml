@@ -28,6 +28,10 @@ jobs:
             - name: 'Checking out code...'
               uses: actions/checkout@v4
 
+            # Copy environment-specific files
+            - name: 'Copying environment-specific files...'
+              run: cp -fr .deploy/staging/. ./ && cp -f .deploy/.npmrc ./
+
             # Generate backend.tf file
             - name: 'Generating backend.tf file...'
               working-directory: 'terraform'
@@ -43,9 +47,6 @@ jobs:
                   service_account: ${{ vars.GCP_MS_SVC_ACCT_STAGING }}
                   token_format: 'access_token'
                   access_token_lifetime: '120s'
-
-            - name: Copying deployment files...
-              run: cp -fr .deploy/.npmrc ./
 
             # Build webapp
             - name: 'Building webapp...'
