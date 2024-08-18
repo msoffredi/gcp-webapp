@@ -10,7 +10,7 @@ resource "google_compute_backend_bucket" "website" {
 # Create HTTPS certificate
 resource "google_compute_managed_ssl_certificate" "website" {
     provider = google-beta
-    name     = "gcp-webapp-cert-${var.deploy_prefix}"
+    name     = "gcp-webapp-certificate-${var.deploy_prefix}"
     managed {
         domains = [google_dns_record_set.website.name]
     }
