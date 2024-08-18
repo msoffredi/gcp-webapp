@@ -4,71 +4,79 @@ run-name: ${{ github.actor }} has triggered the pipeline for Production
 on:
     workflow_dispatch:
 
-permissions:
-    contents: read
-
 jobs:
     deploy:
         runs-on: ubuntu-latest
         permissions:
             id-token: write
             contents: read
+            packages: read
         env:
-            MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
-            MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
             DEPLOY_BUCKET: ${{ vars.DEPLOY_BUCKET_PRODUCTION }}
 
             # Terraform env vars are lowcase by project convention
-            TF_VAR_db_password: ${{ secrets.DB_PASSWORD_PRODUCTION }}
             TF_VAR_project_id: ${{ vars.PROJECT_ID_PRODUCTION }}
-            TF_VAR_atlas_org_id: ${{ vars.ATLAS_ORG_ID }}
-            TF_VAR_db_user: 'gcp-ms'
-            TF_VAR_db_instance_name: 'gcp-ms-prod'
-            TF_VAR_atlas_project_name: 'gcp-ms-prod'
+            TF_VAR_deploy_prefix: 'prod'
+            TF_VAR_domain_zone_name: ${{ vars.DOMAIN_ZONE_NAME }}
+            TF_VAR_domain_project_id: ${{ vars.DOMAIN_PROJECT_ID }}
+            TF_VAR_deploy_env: 'prod'
         steps:
             # Checkout code form repo
             - name: 'Checking out code...'
               uses: actions/checkout@v4
 
+            # Copy environment-specific files
+            - name: 'Copying environment-specific files...'
+              run: cp -fr .deploy/production/. ./ && cp -f .deploy/.npmrc ./
+
             # Generate backend.tf file
             - name: 'Generating backend.tf file...'
-              run: chmod a+rx .deploy/backend.tf.sh && ./.deploy/backend.tf.sh
-
-            - name: 'backend.tf'
-              run: cat backend.tf
+              working-directory: 'terraform'
+              run: chmod a+rx ../.deploy/backend.tf.sh && ../.deploy/backend.tf.sh && cat backend.tf
 
             # Login to GCP
             - name: 'Logging in to GCP...'
               id: auth
               uses: google-github-actions/auth@v2
               with:
-                  workload_identity_provider: ${{ vars.GCP_MS_IDP_PRODUCTION }}
+                  workload_identity_provider: ${{ vars.GCP_MS_IDP_STAGING }}
                   create_credentials_file: true
-                  service_account: ${{ vars.GCP_MS_SVC_ACCT_PRODUCTION }}
+                  service_account: ${{ vars.GCP_MS_SVC_ACCT_STAGING }}
                   token_format: 'access_token'
                   access_token_lifetime: '120s'
 
+            # Build webapp
+            - name: 'Building webapp...'
+              run: npm run build:gcp
+              env:
+                  NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
             # Terraform steps
-            - name: 'Settign up Terraform...'
+            - name: 'Setting up Terraform...'
               uses: hashicorp/setup-terraform@v3
               with:
                   terraform_version: 1.9
                   terraform_wrapper: true
             - name: 'Terraform init...'
               id: init
+              working-directory: 'terraform'
               run: terraform init
             - name: 'Terraform Format...'
               id: fmt
+              working-directory: 'terraform'
               run: terraform fmt -recursive -write=true
             - name: 'Terraform validate...'
               id: validate
+              working-directory: 'terraform'
               run: terraform validate
             - name: 'Terraform plan...'
               id: plan
+              working-directory: 'terraform'
               run: terraform plan
               continue-on-error: true
             - name: 'Terraform Plan Status...'
               if: steps.plan.outcome == 'failure'
               run: exit 1
             - name: 'Terraform apply...'
+              working-directory: 'terraform'
               run: terraform apply -auto-approve
