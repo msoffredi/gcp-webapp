@@ -2,8 +2,9 @@ name: staging-deploy
 run-name: ${{ github.actor }} has triggered the pipeline for Staging
 
 on:
-    pull_request:
-        branches: [main]
+    push:
+        branches:
+            - main
 
 jobs:
     deploy:
