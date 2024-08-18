@@ -41,8 +41,10 @@
     "scripts": {
         "start": "GENERATE_SOURCEMAP=false react-app-rewired start",
         "build": "react-app-rewired build",
+        "build:gcp": "rm -rf build && npm ci && react-app-rewired build",
         "test": "react-app-rewired test",
-        "eject": "react-scripts eject"
+        "eject": "react-scripts eject",
+        "deploy:dev": "npm run build:gcp && cd terraform && terraform apply -auto-approve -var-file='main.tfvars' && cd .."
     },
     "eslintConfig": {
         "extends": [
