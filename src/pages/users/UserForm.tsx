@@ -102,7 +102,7 @@ const UserForm = (props: UserFormProps): JSX.Element => {
                         <FormRowContainer>
                             <FormTextField
                                 name='email'
-                                label='Name'
+                                label='Email'
                                 fullWidth
                                 required
                             />
