@@ -1,5 +1,5 @@
-name: production-destroy
-run-name: ${{ github.actor }} has triggered the pipeline to destroy Production
+name: staging-destroy
+run-name: ${{ github.actor }} has triggered the pipeline to destroy Staging
 
 on:
     workflow_dispatch:
@@ -11,14 +11,14 @@ jobs:
             id-token: write
             contents: read
         env:
-            DEPLOY_BUCKET: ${{ vars.DEPLOY_BUCKET_PRODUCTION }}
+            DEPLOY_BUCKET: ${{ vars.DEPLOY_BUCKET_STAGING }}
 
             # Terraform env vars are lowcase by project convention
-            TF_VAR_project_id: ${{ vars.PROJECT_ID_PRODUCTION }}
-            TF_VAR_deploy_prefix: 'prod'
+            TF_VAR_project_id: ${{ vars.PROJECT_ID_STAGING }}
+            TF_VAR_deploy_prefix: 'staging'
             TF_VAR_domain_zone_name: ${{ vars.DOMAIN_ZONE_NAME }}
             TF_VAR_domain_project_id: ${{ vars.DOMAIN_PROJECT_ID }}
-            TF_VAR_deploy_env: 'prod'
+            TF_VAR_deploy_env: 'staging'
         steps:
             # Checkout code form repo
             - name: 'Checking out code...'
@@ -31,12 +31,12 @@ jobs:
 
             # Login to GCP
             - name: 'Logging in to GCP...'
-              id: auth-prod
+              id: auth-staging
               uses: google-github-actions/auth@v2
               with:
-                  workload_identity_provider: ${{ vars.GCP_MS_IDP_PRODUCTION }}
+                  workload_identity_provider: ${{ vars.GCP_MS_IDP_STAGING }}
                   create_credentials_file: true
-                  service_account: ${{ vars.GCP_MS_SVC_ACCT_PRODUCTION }}
+                  service_account: ${{ vars.GCP_MS_SVC_ACCT_STAGING }}
                   token_format: 'access_token'
                   access_token_lifetime: '120s'
 
