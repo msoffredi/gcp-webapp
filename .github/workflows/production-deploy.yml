@@ -36,12 +36,12 @@ jobs:
 
             # Login to GCP
             - name: 'Logging in to GCP...'
-              id: auth
+              id: auth-prod
               uses: google-github-actions/auth@v2
               with:
-                  workload_identity_provider: ${{ vars.GCP_MS_IDP_STAGING }}
+                  workload_identity_provider: ${{ vars.GCP_MS_IDP_PRODUCTION }}
                   create_credentials_file: true
-                  service_account: ${{ vars.GCP_MS_SVC_ACCT_STAGING }}
+                  service_account: ${{ vars.GCP_MS_SVC_ACCT_PRODUCTION }}
                   token_format: 'access_token'
                   access_token_lifetime: '120s'
 

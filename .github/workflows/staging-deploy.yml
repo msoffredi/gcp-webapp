@@ -38,7 +38,7 @@ jobs:
 
             # Login to GCP
             - name: 'Logging in to GCP...'
-              id: auth
+              id: auth-staging
               uses: google-github-actions/auth@v2
               with:
                   workload_identity_provider: ${{ vars.GCP_MS_IDP_STAGING }}
